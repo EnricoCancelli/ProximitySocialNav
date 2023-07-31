@@ -1,0 +1,130 @@
+BASE_TASK_CONFIG_PATH: configs/datasets/pointnav/gibson_v2.yaml #hm3d.yaml
+CHECKPOINT_FOLDER: data/baseline
+SPLIT: val
+NUM_ENVIRONMENTS: 6
+NUM_UPDATES: 32600
+NUM_CHECKPOINTS: 50
+TEST_EPISODE_COUNT: 500 #-1
+#TRAINER_NAME: "belief-ddppo"
+SENSORS: ['DEPTH_SENSOR'] #, 'RGB_SENSOR', 'SEMANTIC_SENSOR']
+RL:
+  fp16_mode: "autocast"
+  ANG_ACCEL_PENALTY_COEFF: 0.0
+  BACKWARDS_PENALTY: 0.02
+  COLLISION_PENALTY: 0.02
+  CAUTION_PENALTY: 0.01
+  DANGER_PENALTY: 0.01
+  DDPPO:
+    backbone: resnet18
+    distrib_backend: GLOO
+    force_distributed: False
+    num_recurrent_layers: 2
+    pretrained: False
+    pretrained_encoder: False
+    pretrained_weights: data/ddppo-models/gibson-2plus-resnet50.pth
+    reset_critic: True
+    rnn_type: GRU
+    sync_frac: 0.6
+    train_encoder: True
+  FULL_GEODESIC_DECAY: -1.0
+  MAX_ANG_ACCEL_PENALTY: 0.0
+  POLICY:
+    OBS_TRANSFORMS:
+      CENTER_CROPPER:
+        HEIGHT: 224
+        WIDTH: 224
+      CUBE2EQ:
+        HEIGHT: 256
+        SENSOR_UUIDS: []
+        WIDTH: 512
+      CUBE2FISH:
+        FOV: 180
+        HEIGHT: 256
+        PARAMS: (0.2, 0.2, 0.2)
+        SENSOR_UUIDS: []
+        WIDTH: 256
+      ENABLED_TRANSFORMS: ('ResizeSquare',) #('ResizeShortestEdge',)
+      EQ2CUBE:
+        HEIGHT: 256
+        SENSOR_UUIDS: []
+        WIDTH: 256
+      RESIZE_SHORTEST_EDGE:
+        SIZE: 224
+      RESIZE_SQUARE:
+        SIZE: 224
+    action_distribution_type: gaussian
+    name: "PointNavResNetPolicy"
+    #PointNavResNetPolicy
+    #"SINGLE_BELIEF" 
+    #"ATTENTIVE_BELIEF"
+    input_drop: 0.1
+    output_drop: 0.1
+    USE_SEMANTICS: False
+    BELIEFS:
+      ENCODERS: ["rgbd"]
+  PPO:
+    clip_param: 0.1
+    entropy_coef: 0.01
+    aux_loss_coef: 2.0
+    eps: 1e-05
+    gamma: 0.99
+    hidden_size: 512
+    lr: 0.00025
+    max_grad_norm: 0.5
+    num_mini_batch: 2
+    num_steps: 128
+    #256
+    ppo_epoch: 4
+    reward_window_size: 50
+    tau: 0.95
+    use_double_buffered_sampler: False
+    use_gae: True
+    use_linear_clip_decay: False
+    use_linear_lr_decay: False
+    use_normalized_advantage: False
+    value_loss_coef: 0.5
+  AUX_TASKS:
+    tasks:
+      #- "CPCA"
+      #- "GID"
+      #- "CPCA_B"
+      - "Risk"
+      #- "SocialCompass"
+    CPCA:
+      num_steps: 4
+      subsample_rate: 0.2
+      loss_factor: 0.05
+    CPCA_B:
+      num_steps: 2
+    GID:
+      loss_factor: 0.1
+      num_steps: 4
+      subsample_rate: 0.2
+    InverseDynamicsTask:
+      loss_factor: 0.05
+      subsample_rate: 0.2
+    TemporalDistanceTask:
+      loss_factor: 0.2
+      num_pairs: 8
+    Risk:
+      num_steps: 4
+      loss_factor: 0.05
+      subsample_rate: 0.2
+    SocialCompass:
+      num_steps: 4
+      loss_factor: 0.05
+      subsample_rate: 0.2
+    entropy_coef: 0.0
+  RANDOM_CROP: [-1.0, -1.0]
+  RANDOM_CUTOUT: False
+  REWARD_MEASURE: distance_to_goal
+  SLACK_REWARD: -0.002
+  SUCCESS_MEASURE: spl
+  SUCCESS_REWARD: 10.0
+  #2.5
+  preemption:
+    append_slurm_job_id: False
+    save_resume_state_interval: 100
+    save_state_batch_only: False
+
+VIDEO_OPTION: []

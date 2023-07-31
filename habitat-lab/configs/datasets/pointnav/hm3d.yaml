@@ -1,0 +1,55 @@
+ENVIRONMENT:
+  MAX_EPISODE_STEPS: 500
+SIMULATOR:
+  AGENT_0:
+    HEIGHT: 0.88
+    RADIUS: 0.18 #0.08 #0.18
+  TYPE: iGibsonSocialNav
+  PEOPLE_ANG_SPEED: 10.0
+  PEOPLE_LIN_SPEED: 0.25
+  TIME_STEP: 1.0
+  PPOLICY: greedy
+
+TASK:
+  TYPE: SocialNav-v0
+  SUCCESS_DISTANCE: 0.2
+
+  SENSORS: ['POINTGOAL_WITH_GPS_COMPASS_SENSOR', 'RISK_SENSOR', 'SOCIAL_COMPASS'] #, 'ENCOUNTERS'] # +enc
+  #, 'RISK_SENSOR', 'SOCIAL_COMPASS']
+  POINTGOAL_WITH_GPS_COMPASS_SENSOR:
+    GOAL_FORMAT: "POLAR"
+    DIMENSIONALITY: 2
+  ENCOUNTERS:
+    NAME: json_hm3d_junk
+    CKP: 0
+    RADIUS: 3.0
+    SLACK: 0.2
+    FACING_STEPS: 8
+    BLINDED_STEPS: 4
+    TYPE: FrontalSensor
+  SOCIAL_COMPASS:
+    THRES: 9.0 #6.0
+    BINS: 8
+    TYPE: SocialCompassSensor
+  RISK_SENSOR:
+    THRES: 3.0
+    TYPE: RiskSensor
+  GOAL_SENSOR_UUID: pointgoal_with_gps_compass
+
+  MEASUREMENTS: ['DISTANCE_TO_GOAL', 'SUCCESS', 'SPL', 'SCT', 'PSCEUC', 'HUMAN_COLLISION']
+  SUCCESS:
+    SUCCESS_DISTANCE: 0.2
+  PSC:
+    TYPE: PersonalSpaceCompliance
+  PSCEUC:
+    TYPE: PersonalSpaceComplianceH
+  SCT:
+    TYPE: SCT
+    HOLONOMIC_VELOCITY: 0.125
+    TIME_STEP: 1.0
+
+
+DATASET:
+  TYPE: PointNav-v1
+  SPLIT: train
+  DATA_PATH: data/datasets/pointnav/hm3d/{split}/{split}.json.gz
