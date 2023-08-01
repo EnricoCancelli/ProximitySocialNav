@@ -1,11 +1,16 @@
+[![Conference](http://img.shields.io/badge/ICCV-2023-4b44ce.svg)](https://iccv2023.thecvf.com)
+[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Paper](http://img.shields.io/badge/paper-arxiv.2212.00767-B31B1B.svg)](https://arxiv.org/abs/2212.00767)
 # Exploiting Proximity-Aware Tasks for Embodied Social Navigation
 **Enrico Cancelli, Tommaso Campari, Luciano Serafini, Angel X. Chang, Lamberto Ballan**
 
-[[arxiv paper](https://arxiv.org/abs/2212.00767)] [[CVPR EAI workshop paper](https://embodied-ai.org/papers/2023/11.pdf)]
+Accepted at ICCV 2023
+
+Short version: [[CVPR EAI workshop paper](https://embodied-ai.org/papers/2023/11.pdf)]
 
 This repository contains the implementation and episode dataset from the paper.
 
-**Warning:** It is still WIP. Feel free to open an issue if you encounter some problems or ave some questions.
+**Warning:** It is still WIP. Feel free to open an issue if you encounter some problems or have some questions.
 ## Setup
 ### Setting up conda 
 ```bash
@@ -43,7 +48,7 @@ with the correct path (will be made a parameter in future).
 
 ### HM3D-S episode dataset
 The dataset is in the `habitat-lab/data/dataset/pointnav/hm3d` folder.
-To use it add this paramete to your main config file:
+To use it add this parameter to your main config file:
 ```
 BASE_TASK_CONFIG_PATH: configs/datasets/pointnav/hm3d.yaml
 ```
