@@ -389,3 +389,79 @@ class CPCA_C(CPCA):
 @baseline_registry.register_aux_task(name="CPCA_D")
 class CPCA_D(CPCA):
     pass
+
+@baseline_registry.register_aux_task(name="ImplicitCompass")
+class ImplicitCompassAuxTask(RolloutAuxTask):
+    r""" Class for calculating timesteps between two randomly selected observations
+        Specifically, randomly select `num_pairs` frames per env and predict the frames elapsed
+        batch["odometric_gpscompass"]
+    """
+
+    def __init__(self, cfg, aux_cfg, task_cfg, device, observation_space, **kwargs):
+        super().__init__(cfg, aux_cfg, task_cfg, device, observation_space,
+                         **kwargs)
+        num_actions = len(task_cfg.POSSIBLE_ACTIONS)
+        assert "POINTGOAL_WITH_GPS_COMPASS_SENSOR_SINGLE" in task_cfg.SENSORS, \
+            "ImplicitCompass requires GPS+Compass (SINGLE), include it in SENSOR variable"
+        self.num_bins = observation_space.spaces["pointgoal_with_gps_compass_single"].shape[0]
+        self.classifier = nn.Linear(cfg.hidden_size, self.num_bins)
+        self.loss = nn.MSELoss(reduction="none")
+
+        if len(task_cfg.POSSIBLE_ACTIONS) == 1 and task_cfg.POSSIBLE_ACTIONS[
+            0] == "VELOCITY_CONTROL":
+            self.action_embedder = nn.Linear(2, ACTION_EMBEDDING_DIM)
+            # 512
+            self.query_gru = nn.GRU(ACTION_EMBEDDING_DIM+512, cfg.hidden_size)
+        else:
+            self.action_embedder = nn.Embedding(num_actions + 1,
+                                                ACTION_EMBEDDING_DIM)
+            #512
+            self.query_gru = nn.GRU(ACTION_EMBEDDING_DIM+512, cfg.hidden_size)
+
+    def get_loss(self, observations, actions, vision, final_belief_state, belief_features, n, t, env_zeros):
+        assert vision.shape[-1] == 512
+        k = self.aux_cfg.num_steps  # up to t
+        assert 0 < k <= t, "CPC requires prediction range to be in (0, t]"
+        t_hat = t - k + 1
+
+        belief_features = belief_features[:t_hat].view(t_hat * n,
+                                                       -1).unsqueeze(0)
+
+        goal_values = observations["pointgoal_with_gps_compass_single"].view(t, n, -1)
+
+        actions = torch.squeeze(actions, dim=-1)
+        action_embedding = self.action_embedder(actions)  # t n -1
+        action_seq = action_embedding.unfold(dimension=0, size=k, step=1). \
+            permute(3, 0, 1, 2).view(k, t_hat * n, ACTION_EMBEDDING_DIM)
+
+        goal_seq = goal_values.unfold(dimension=0, size=k, step=1). \
+            permute(3, 0, 1, 2).view(k, t_hat * n, -1)
+
+        vision_seq = vision.unfold(dimension=0, size=k, step=1). \
+            permute(3, 0, 1, 2).view(k, t_hat * n, -1)
+
+        # for each timestep, predict up to k ahead -> (t,k) is query for t + k (+ 1) (since k is 0-indexed) i.e. (0, 0) -> query for 1
+        out_all, _ = self.query_gru(torch.cat([action_seq, vision_seq], dim=-1), belief_features)
+        # (k, t_hat*n, hidden)
+
+        # Targets: predict k steps for each starting timestep
+        pred_deltas = self.classifier(out_all.view(k * t_hat * n, -1)) \
+            .view(k, t_hat * n, -1)
+        losses = self.loss(goal_seq[0]+pred_deltas, goal_seq)[1:].permute(1, 0, 2).view(
+            t_hat, n,
+            k-1, -1)
+
+        valid_modeling_queries = torch.ones(
+            t_hat, n, 1, 1, device=self.device, dtype=torch.bool
+        )
+        for env in range(n):
+            has_zeros_batch = env_zeros[env]
+            for z in has_zeros_batch:
+                valid_modeling_queries[z - k: z, env, :] = False
+
+        losses = torch.masked_select(losses, valid_modeling_queries)
+
+        subsampled_loss = subsampled_mean(losses,
+                                          p=self.aux_cfg.subsample_rate)
+
+        return subsampled_loss * self.aux_cfg.loss_factor

@@ -344,6 +344,56 @@ class IntegratedPointGoalGPSAndCompassSensor(PointGoalSensor):
         )
 
 
+@registry.register_sensor(name="PointGoalWithGPSCompassSingleSensor")
+class IntegratedPointGoalGPSAndCompassSingleSensor(PointGoalSensor):
+    r"""Sensor that integrates PointGoals observations (which are used PointGoal Navigation) and GPS+Compass.
+
+    For the agent in simulator the forward direction is along negative-z.
+    In polar coordinate format the angle returned is azimuth to the goal.
+
+    Args:
+        sim: reference to the simulator for calculating task observations.
+        config: config for the PointGoal sensor. Can contain field for
+            GOAL_FORMAT which can be used to specify the format in which
+            the pointgoal is specified. Current options for goal format are
+            cartesian and polar.
+
+            Also contains a DIMENSIONALITY field which specifes the number
+            of dimensions ued to specify the goal, must be in [2, 3]
+
+    Attributes:
+        _goal_format: format for specifying the goal which can be done
+            in cartesian or polar coordinates.
+        _dimensionality: number of dimensions used to specify the goal
+    """
+    cls_uuid: str = "pointgoal_with_gps_compass_single"
+
+    def __init__(
+        self, sim: Simulator, config: Config, *args: Any, **kwargs: Any
+    ):
+        super().__init__(sim, config, *args, **kwargs)
+        self.current_episode = None
+        self.current_measure = None
+
+    def _get_uuid(self, *args: Any, **kwargs: Any) -> str:
+        return self.cls_uuid
+
+    def get_observation(
+        self, observations, episode, *args: Any, **kwargs: Any
+    ):
+        if self.current_episode is None or self.current_episode != episode.episode_id:
+            agent_state = self._sim.get_agent_state()
+            agent_position = agent_state.position
+            rotation_world_agent = agent_state.rotation
+            goal_position = np.array(episode.goals[0].position, dtype=np.float32)
+
+            self.current_episode = episode.episode_id
+            self.current_measure = self._compute_pointgoal(
+                agent_position, rotation_world_agent, goal_position
+            )
+        return self.current_measure
+
+
 @registry.register_sensor
 class HeadingSensor(Sensor):
     r"""Sensor for observing the agent's heading in the global coordinate

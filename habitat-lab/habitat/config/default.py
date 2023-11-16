@@ -105,6 +105,13 @@ _C.TASK.POINTGOAL_WITH_GPS_COMPASS_SENSOR.TYPE = (
     "PointGoalWithGPSCompassSensor"
 )
 # -----------------------------------------------------------------------------
+# POINTGOAL WITH GPS+COMPASS SINGLE SENSOR
+# -----------------------------------------------------------------------------
+_C.TASK.POINTGOAL_WITH_GPS_COMPASS_SENSOR_SINGLE = _C.TASK.POINTGOAL_SENSOR.clone()
+_C.TASK.POINTGOAL_WITH_GPS_COMPASS_SENSOR_SINGLE.TYPE = (
+    "PointGoalWithGPSCompassSingleSensor"
+)
+# -----------------------------------------------------------------------------
 # ODOMETRIC GPS+COMPASS SENSOR
 # -----------------------------------------------------------------------------
 _C.TASK.ODOMETRIC_GPS_COMPASS_SENSOR = _C.TASK.POINTGOAL_SENSOR.clone()

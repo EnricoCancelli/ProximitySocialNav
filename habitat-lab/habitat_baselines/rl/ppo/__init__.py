@@ -8,6 +8,7 @@ from typing import Dict
 from habitat_baselines.rl.ppo.policy import Net, PointNavBaselinePolicy, Policy
 from habitat_baselines.rl.ppo.ppo import PPO
 from habitat_baselines.rl.ppo.belief_ppo_trainer import BeliefPPOTrainer
+from habitat_baselines.rl.ppo.belief_ppo_trainer_implicit import BeliefPPOTrainerImpl
 from habitat_baselines.rl.ppo.belief_policy import (
     BeliefPolicy, AttentiveBeliefPolicy, #MidLevelPolicy,
     FixedAttentionBeliefPolicy, AverageBeliefPolicy, SoftmaxBeliefPolicy,

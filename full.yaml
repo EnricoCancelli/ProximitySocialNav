@@ -5,8 +5,8 @@ NUM_ENVIRONMENTS: 6
 NUM_UPDATES: 32600
 NUM_CHECKPOINTS: 50
 TEST_EPISODE_COUNT: 500 #-1
-TRAINER_NAME: "belief-ddppo"
-SENSORS: ['DEPTH_SENSOR', 'RGB_SENSOR', 'SEMANTIC_SENSOR']
+TRAINER_NAME: "belief-ddppo" #"belief-ddppo-impl"
+SENSORS: ['DEPTH_SENSOR', 'RGB_SENSOR', 'SEMANTIC_SENSOR'] #POINTGOAL_WITH_GPS_COMPASS_SENSOR_SINGLE
 RL:
   fp16_mode: "autocast"
   ANG_ACCEL_PENALTY_COEFF: 0.0
@@ -111,6 +111,10 @@ RL:
       loss_factor: 0.05
       subsample_rate: 0.2
     SocialCompass:
+      num_steps: 4
+      loss_factor: 0.05
+      subsample_rate: 0.2
+    ImplicitCompass:
       num_steps: 4
       loss_factor: 0.05
       subsample_rate: 0.2
